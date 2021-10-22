@@ -9,28 +9,28 @@ CURRENT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 CLUE_DATA_DIR=$CURRENT_DIR/CLUEdataset
 ALBERT_TINY_DIR=$CURRENT_DIR/albert_tiny
 
-download_data(){
-  TASK_NAME=$1
-  if [ ! -d $CLUE_DATA_DIR ]; then
-    mkdir -p $CLUE_DATA_DIR
-    echo "makedir $CLUE_DATA_DIR"
-  fi
-  cd $CLUE_DATA_DIR
-  if [ ! -d ${TASK_NAME} ]; then
-    mkdir $TASK_NAME
-    echo "make dataset dir $CLUE_DATA_DIR/$TASK_NAME"
-  fi
-  cd $TASK_NAME
-  if [ ! -f "train.json" ] || [ ! -f "dev.json" ] || [ ! -f "test.json" ]; then
-    rm *
-    wget https://storage.googleapis.com/cluebenchmark/tasks/${TASK_NAME}_public.zip
-    unzip ${TASK_NAME}_public.zip
-    rm ${TASK_NAME}_public.zip
-  else
-    echo "data exists"
-  fi
-  echo "Finish download dataset."
-}
+#download_data(){
+#  TASK_NAME=$1
+#  if [ ! -d $CLUE_DATA_DIR ]; then
+#    mkdir -p $CLUE_DATA_DIR
+#    echo "makedir $CLUE_DATA_DIR"
+#  fi
+#  cd $CLUE_DATA_DIR
+#  if [ ! -d ${TASK_NAME} ]; then
+#    mkdir $TASK_NAME
+#    echo "make dataset dir $CLUE_DATA_DIR/$TASK_NAME"
+#  fi
+#  cd $TASK_NAME
+#  if [ ! -f "train.json" ] || [ ! -f "dev.json" ] || [ ! -f "test.json" ]; then
+#    rm *
+#    wget https://storage.googleapis.com/cluebenchmark/tasks/${TASK_NAME}_public.zip
+#    unzip ${TASK_NAME}_public.zip
+#    rm ${TASK_NAME}_public.zip
+#  else
+#    echo "data exists"
+#  fi
+#  echo "Finish download dataset."
+#}
 
 download_model(){
   if [ ! -d $ALBERT_TINY_DIR ]; then
@@ -92,9 +92,9 @@ run_task() {
 }
 
 ##command##task_name##model_name##max_seq_length##train_batch_size##learning_rate##num_train_epochs##save_checkpoints_steps##tpu_ip
-run_task afqmc 128 16 2e-5 3 300
-run_task cmnli 128 64 3e-5 2 300
-run_task csl 128 16 1e-5 5 100
+#run_task afqmc 128 16 2e-5 3 300
+#run_task cmnli 128 64 3e-5 2 300
+#run_task csl 128 16 1e-5 5 100
 run_task iflytek 128 32 2e-5 3 300
-run_task tnews 128 16 2e-5 3 300
-run_task wsc 128 16 1e-5 10 10
+#run_task tnews 128 16 2e-5 3 300
+#run_task wsc 128 16 1e-5 10 10
