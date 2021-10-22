@@ -30,6 +30,9 @@ import tokenization
 import tensorflow as tf
 # from loss import bi_tempered_logistic_loss
 import sys
+
+from args import arg_dic
+
 sys.path.append('..')
 from classifier_utils import *
 
@@ -318,6 +321,8 @@ def convert_single_example(ex_index, example, label_list, max_seq_length,
   for (i, label) in enumerate(label_list):
     label_map[label] = i
 
+  tf.logging.info("我的label_map: %s" % (label_map))
+
   tokens_a = tokenizer.tokenize(example.text_a)
   tokens_b = None
   if example.text_b:
@@ -384,6 +389,7 @@ def convert_single_example(ex_index, example, label_list, max_seq_length,
   assert len(input_mask) == max_seq_length
   assert len(segment_ids) == max_seq_length
 
+  tf.logging.info("我的例子的标签: %s" % (example.label))
   label_id = label_map[example.label]
   if ex_index < 5:
     tf.logging.info("*** Example ***")
@@ -729,20 +735,94 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
     features.append(feature)
   return features
 
+def create_classification_model(bert_config, is_training, input_ids, input_mask, segment_ids, labels, num_labels):
+    # 通过传入的训练数据，进行representation
+    model = modeling.BertModel(
+        config=bert_config,
+        is_training=is_training,
+        input_ids=input_ids,
+        input_mask=input_mask,
+        token_type_ids=segment_ids,
+    )
+
+    embedding_layer = model.get_sequence_output()
+    output_layer = model.get_pooled_output()
+    hidden_size = output_layer.shape[-1].value
+
+    output_weights = tf.get_variable(
+        "output_weights", [num_labels, hidden_size],
+        initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    output_bias = tf.get_variable(
+        "output_bias", [num_labels], initializer=tf.zeros_initializer())
+
+    with tf.variable_scope("loss"):
+        if is_training:
+            # I.e., 0.1 dropout
+            output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
+
+        logits = tf.matmul(output_layer, output_weights, transpose_b=True)
+        logits = tf.nn.bias_add(logits, output_bias)
+        probabilities = tf.nn.softmax(logits, axis=-1)
+        log_probs = tf.nn.log_softmax(logits, axis=-1)
+
+        if labels is not None:
+            one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)
+
+            per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
+            loss = tf.reduce_mean(per_example_loss)
+        else:
+            loss, per_example_loss = None, None
+    return (loss, per_example_loss, logits, probabilities)
+
+
+def save_PBmodel( num_labels):
+    """    保存PB格式中文分类模型    """
+    try:
+        # 如果PB文件已经存在，则返回PB文件的路径，否则将模型转化为PB文件，并且返回存储PB文件的路径
+        pb_file = os.path.join(arg_dic['pb_model_dir'], 'classification_model.pb')
+        graph = tf.Graph()
+        with graph.as_default():
+            input_ids = tf.placeholder(tf.int32, (None, arg_dic['max_seq_length']), 'input_ids')
+            input_mask = tf.placeholder(tf.int32, (None, arg_dic['max_seq_length']), 'input_mask')
+            # bert_config = modeling.BertConfig.from_json_file(arg_dic['bert_config_file'])
+
+            bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
+
+            loss, per_example_loss, logits, probabilities = create_classification_model(
+                bert_config=bert_config, is_training=False,
+                input_ids=input_ids, input_mask=input_mask, segment_ids=None, labels=None, num_labels=num_labels)
+
+            probabilities = tf.identity(probabilities, 'pred_prob')
+            saver = tf.train.Saver()
+
+            with tf.Session() as sess:
+                sess.run(tf.global_variables_initializer())
+                latest_checkpoint = tf.train.latest_checkpoint(arg_dic['output_dir'])
+                saver.restore(sess, latest_checkpoint)
+                from tensorflow.python.framework import graph_util
+                tmp_g = graph_util.convert_variables_to_constants(sess, graph.as_graph_def(), ['pred_prob'])
+
+        # 存储二进制模型到文件中
+        with tf.gfile.GFile(pb_file, 'wb') as f:
+            f.write(tmp_g.SerializeToString())
+        return pb_file
+    except Exception as e:
+        print('111 fail to optimize the graph! %s', e)
 
 def main(_):
   tf.logging.set_verbosity(tf.logging.INFO)
 
   processors = {
-      "xnli": XnliProcessor,
-      "tnews": TnewsProcessor,
-      "afqmc": AFQMCProcessor,
+      # "xnli": XnliProcessor,
+      # "tnews": TnewsProcessor,
+      # "afqmc": AFQMCProcessor,
       "iflytek": iFLYTEKDataProcessor,
-      "copa": COPAProcessor,
-      "cmnli": CMNLIProcessor,
-      "wsc": WSCProcessor,
-      "csl": CslProcessor,
-      "copa": COPAProcessor,
+      # "copa": COPAProcessor,
+      # "cmnli": CMNLIProcessor,
+      # "wsc": WSCProcessor,
+      # "csl": CslProcessor,
+      # "copa": COPAProcessor,
   }
 
   tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
@@ -764,12 +844,16 @@ def main(_):
 
   task_name = FLAGS.task_name.lower()
 
+  tf.logging.info("#1## task_name  %s ", task_name)
+
   if task_name not in processors:
     raise ValueError("Task not found: %s" % (task_name))
 
   processor = processors[task_name]()
+  tf.logging.info("我的处理器列表 #33## processor  %s ", processor)
 
   label_list = processor.get_labels()
+  tf.logging.info("我的标签列表 #22## label_list  %s ", label_list)
 
   tokenizer = tokenization.FullTokenizer(
       vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
@@ -985,7 +1069,8 @@ def main(_):
           writer_label.write("\n")
           num_written_lines += 1
     assert num_written_lines == num_actual_predict_examples
-
+    ## add by xusijun
+    save_PBmodel(len(label_list))  # 生成单个pb模型。
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("data_dir")
