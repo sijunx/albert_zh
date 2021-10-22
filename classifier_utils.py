@@ -130,43 +130,44 @@ class DataProcessor(object):
       reader = f.readlines()
       lines = []
       for line in reader:
+        tf.logging.info("获取的json数据 %s ", line)
         lines.append(json.loads(line.strip()))
       return lines
 
 
-class XnliProcessor(DataProcessor):
-  """Processor for the XNLI data set."""
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "train.json")), "train")
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "dev.json")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "test.json")), "test")
-
-  def _create_examples(self, lines, set_type):
-    """See base class."""
-    examples = []
-    for (i, line) in enumerate(lines):
-      guid = "%s-%s" % (set_type, i)
-      text_a = convert_to_unicode(line['premise'])
-      text_b = convert_to_unicode(line['hypo'])
-      label = convert_to_unicode(line['label']) if set_type != 'test' else 'contradiction'
-      examples.append(
-          InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-    return examples
-
-  def get_labels(self):
-    """See base class."""
-    return ["contradiction", "entailment", "neutral"]
+# class XnliProcessor(DataProcessor):
+#   """Processor for the XNLI data set."""
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "train.json")), "train")
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "test.json")), "test")
+#
+#   def _create_examples(self, lines, set_type):
+#     """See base class."""
+#     examples = []
+#     for (i, line) in enumerate(lines):
+#       guid = "%s-%s" % (set_type, i)
+#       text_a = convert_to_unicode(line['premise'])
+#       text_b = convert_to_unicode(line['hypo'])
+#       label = convert_to_unicode(line['label']) if set_type != 'test' else 'contradiction'
+#       examples.append(
+#           InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+#     return examples
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["contradiction", "entailment", "neutral"]
 
 
 # class TnewsProcessor(DataProcessor):
@@ -296,6 +297,7 @@ class iFLYTEKDataProcessor(DataProcessor):
 
   def get_train_examples(self, data_dir):
     """See base class."""
+    tf.logging.info("#根目录为## data_dir  %s ", data_dir)
     return self._create_examples(
         self._read_json(os.path.join(data_dir, "train.json")), "train")
 
@@ -312,8 +314,11 @@ class iFLYTEKDataProcessor(DataProcessor):
   def get_labels(self):
     """See base class."""
     labels = []
-    for i in range(119):
+    # for i in range(119):
+    # 标签改为1，2
+    for i in range(2):
       labels.append(str(i))
+    tf.logging.info("我的243 get_labels: %s" % (labels))
     return labels
 
   def _create_examples(self, lines, set_type):
@@ -329,112 +334,112 @@ class iFLYTEKDataProcessor(DataProcessor):
     return examples
 
 
-class AFQMCProcessor(DataProcessor):
-  """Processor for the internal data set. sentence pair classification"""
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "train.json")), "train")
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "dev.json")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "test.json")), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["0", "1"]
-
-  def _create_examples(self, lines, set_type):
-    """Creates examples for the training and dev sets."""
-    examples = []
-    for (i, line) in enumerate(lines):
-      guid = "%s-%s" % (set_type, i)
-      text_a = convert_to_unicode(line['sentence1'])
-      text_b = convert_to_unicode(line['sentence2'])
-      label = convert_to_unicode(line['label']) if set_type != 'test' else '0'
-      examples.append(
-          InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-    return examples
-
-
-class CMNLIProcessor(DataProcessor):
-  """Processor for the CMNLI data set."""
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples_json(os.path.join(data_dir, "train.json"), "train")
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples_json(os.path.join(data_dir, "dev.json"), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples_json(os.path.join(data_dir, "test.json"), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["contradiction", "entailment", "neutral"]
-
-  def _create_examples_json(self, file_name, set_type):
-    """Creates examples for the training and dev sets."""
-    examples = []
-    lines = tf.gfile.Open(file_name, "r")
-    index = 0
-    for line in lines:
-      line_obj = json.loads(line)
-      index = index + 1
-      guid = "%s-%s" % (set_type, index)
-      text_a = convert_to_unicode(line_obj["sentence1"])
-      text_b = convert_to_unicode(line_obj["sentence2"])
-      label = convert_to_unicode(line_obj["label"]) if set_type != 'test' else 'neutral'
-
-      if label != "-":
-        examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-
-    return examples
+# class AFQMCProcessor(DataProcessor):
+#   """Processor for the internal data set. sentence pair classification"""
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "train.json")), "train")
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "test.json")), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["0", "1"]
+#
+#   def _create_examples(self, lines, set_type):
+#     """Creates examples for the training and dev sets."""
+#     examples = []
+#     for (i, line) in enumerate(lines):
+#       guid = "%s-%s" % (set_type, i)
+#       text_a = convert_to_unicode(line['sentence1'])
+#       text_b = convert_to_unicode(line['sentence2'])
+#       label = convert_to_unicode(line['label']) if set_type != 'test' else '0'
+#       examples.append(
+#           InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+#     return examples
 
 
-class CslProcessor(DataProcessor):
-  """Processor for the CSL data set."""
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "train.json")), "train")
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "dev.json")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "test.json")), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["0", "1"]
-
-  def _create_examples(self, lines, set_type):
-    """Creates examples for the training and dev sets."""
-    examples = []
-    for (i, line) in enumerate(lines):
-      guid = "%s-%s" % (set_type, i)
-      text_a = convert_to_unicode(" ".join(line['keyword']))
-      text_b = convert_to_unicode(line['abst'])
-      label = convert_to_unicode(line['label']) if set_type != 'test' else '0'
-      examples.append(
-          InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-    return examples
+# class CMNLIProcessor(DataProcessor):
+#   """Processor for the CMNLI data set."""
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples_json(os.path.join(data_dir, "train.json"), "train")
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples_json(os.path.join(data_dir, "dev.json"), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples_json(os.path.join(data_dir, "test.json"), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["contradiction", "entailment", "neutral"]
+#
+#   def _create_examples_json(self, file_name, set_type):
+#     """Creates examples for the training and dev sets."""
+#     examples = []
+#     lines = tf.gfile.Open(file_name, "r")
+#     index = 0
+#     for line in lines:
+#       line_obj = json.loads(line)
+#       index = index + 1
+#       guid = "%s-%s" % (set_type, index)
+#       text_a = convert_to_unicode(line_obj["sentence1"])
+#       text_b = convert_to_unicode(line_obj["sentence2"])
+#       label = convert_to_unicode(line_obj["label"]) if set_type != 'test' else 'neutral'
+#
+#       if label != "-":
+#         examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+#
+#     return examples
+#
+#
+# class CslProcessor(DataProcessor):
+#   """Processor for the CSL data set."""
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "train.json")), "train")
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "test.json")), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["0", "1"]
+#
+#   def _create_examples(self, lines, set_type):
+#     """Creates examples for the training and dev sets."""
+#     examples = []
+#     for (i, line) in enumerate(lines):
+#       guid = "%s-%s" % (set_type, i)
+#       text_a = convert_to_unicode(" ".join(line['keyword']))
+#       text_b = convert_to_unicode(line['abst'])
+#       label = convert_to_unicode(line['label']) if set_type != 'test' else '0'
+#       examples.append(
+#           InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+#     return examples
 
 
 # class InewsProcessor(DataProcessor):
@@ -776,145 +781,145 @@ class CslProcessor(DataProcessor):
 #           InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
 #     return examples
 
-class WSCProcessor(DataProcessor):
-  """Processor for the internal data set. sentence pair classification"""
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "train.json")), "train")
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "dev.json")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "test.json")), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["true", "false"]
-
-  def _create_examples(self, lines, set_type):
-    """Creates examples for the training and dev sets."""
-    examples = []
-    for (i, line) in enumerate(lines):
-      guid = "%s-%s" % (set_type, i)
-      text_a = convert_to_unicode(line['text'])
-      text_a_list = list(text_a)
-      target = line['target']
-      query = target['span1_text']
-      query_idx = target['span1_index']
-      pronoun = target['span2_text']
-      pronoun_idx = target['span2_index']
-
-      assert text_a[pronoun_idx: (pronoun_idx + len(pronoun))
-                    ] == pronoun, "pronoun: {}".format(pronoun)
-      assert text_a[query_idx: (query_idx + len(query))] == query, "query: {}".format(query)
-
-      if pronoun_idx > query_idx:
-        text_a_list.insert(query_idx, "_")
-        text_a_list.insert(query_idx + len(query) + 1, "_")
-        text_a_list.insert(pronoun_idx + 2, "[")
-        text_a_list.insert(pronoun_idx + len(pronoun) + 2 + 1, "]")
-      else:
-        text_a_list.insert(pronoun_idx, "[")
-        text_a_list.insert(pronoun_idx + len(pronoun) + 1, "]")
-        text_a_list.insert(query_idx + 2, "_")
-        text_a_list.insert(query_idx + len(query) + 2 + 1, "_")
-
-      text_a = "".join(text_a_list)
-
-      if set_type == "test":
-        label = "true"
-      else:
-        label = line['label']
-
-      examples.append(
-          InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
-    return examples
-
-
-class COPAProcessor(DataProcessor):
-  """Processor for the internal data set. sentence pair classification"""
-
-  def __init__(self):
-    self.language = "zh"
-
-  def get_train_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "train.json")), "train")
-    # dev_0827.tsv
-
-  def get_dev_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "dev.json")), "dev")
-
-  def get_test_examples(self, data_dir):
-    """See base class."""
-    return self._create_examples(
-        self._read_json(os.path.join(data_dir, "test.json")), "test")
-
-  def get_labels(self):
-    """See base class."""
-    return ["0", "1"]
-
-  @classmethod
-  def _create_examples_one(self, lines, set_type):
-    examples = []
-    for (i, line) in enumerate(lines):
-      guid1 = "%s-%s" % (set_type, i)
-#         try:
-      if line['question'] == 'cause':
-        text_a = convert_to_unicode(line['premise'] + '原因是什么呢？' + line['choice0'])
-        text_b = convert_to_unicode(line['premise'] + '原因是什么呢？' + line['choice1'])
-      else:
-        text_a = convert_to_unicode(line['premise'] + '造成了什么影响呢？' + line['choice0'])
-        text_b = convert_to_unicode(line['premise'] + '造成了什么影响呢？' + line['choice1'])
-      label = convert_to_unicode(str(1 if line['label'] == 0 else 0)) if set_type != 'test' else '0'
-      examples.append(
-          InputExample(guid=guid1, text_a=text_a, text_b=text_b, label=label))
-#         except Exception as e:
-#             print('###error.i:',e, i, line)
-    return examples
-
-  @classmethod
-  def _create_examples(self, lines, set_type):
-    examples = []
-    for (i, line) in enumerate(lines):
-      i = 2 * i
-      guid1 = "%s-%s" % (set_type, i)
-      guid2 = "%s-%s" % (set_type, i + 1)
-#         try:
-      premise = convert_to_unicode(line['premise'])
-      choice0 = convert_to_unicode(line['choice0'])
-      label = convert_to_unicode(str(1 if line['label'] == 0 else 0)) if set_type != 'test' else '0'
-      #text_a2 = convert_to_unicode(line['premise'])
-      choice1 = convert_to_unicode(line['choice1'])
-      label2 = convert_to_unicode(
-          str(0 if line['label'] == 0 else 1)) if set_type != 'test' else '0'
-      if line['question'] == 'effect':
-        text_a = premise
-        text_b = choice0
-        text_a2 = premise
-        text_b2 = choice1
-      elif line['question'] == 'cause':
-        text_a = choice0
-        text_b = premise
-        text_a2 = choice1
-        text_b2 = premise
-      else:
-        print('wrong format!!')
-        return None
-      examples.append(
-          InputExample(guid=guid1, text_a=text_a, text_b=text_b, label=label))
-      examples.append(
-          InputExample(guid=guid2, text_a=text_a2, text_b=text_b2, label=label2))
-#         except Exception as e:
-#             print('###error.i:',e, i, line)
-    return examples
+# class WSCProcessor(DataProcessor):
+#   """Processor for the internal data set. sentence pair classification"""
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "train.json")), "train")
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "test.json")), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["true", "false"]
+#
+#   def _create_examples(self, lines, set_type):
+#     """Creates examples for the training and dev sets."""
+#     examples = []
+#     for (i, line) in enumerate(lines):
+#       guid = "%s-%s" % (set_type, i)
+#       text_a = convert_to_unicode(line['text'])
+#       text_a_list = list(text_a)
+#       target = line['target']
+#       query = target['span1_text']
+#       query_idx = target['span1_index']
+#       pronoun = target['span2_text']
+#       pronoun_idx = target['span2_index']
+#
+#       assert text_a[pronoun_idx: (pronoun_idx + len(pronoun))
+#                     ] == pronoun, "pronoun: {}".format(pronoun)
+#       assert text_a[query_idx: (query_idx + len(query))] == query, "query: {}".format(query)
+#
+#       if pronoun_idx > query_idx:
+#         text_a_list.insert(query_idx, "_")
+#         text_a_list.insert(query_idx + len(query) + 1, "_")
+#         text_a_list.insert(pronoun_idx + 2, "[")
+#         text_a_list.insert(pronoun_idx + len(pronoun) + 2 + 1, "]")
+#       else:
+#         text_a_list.insert(pronoun_idx, "[")
+#         text_a_list.insert(pronoun_idx + len(pronoun) + 1, "]")
+#         text_a_list.insert(query_idx + 2, "_")
+#         text_a_list.insert(query_idx + len(query) + 2 + 1, "_")
+#
+#       text_a = "".join(text_a_list)
+#
+#       if set_type == "test":
+#         label = "true"
+#       else:
+#         label = line['label']
+#
+#       examples.append(
+#           InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+#     return examples
+#
+#
+# class COPAProcessor(DataProcessor):
+#   """Processor for the internal data set. sentence pair classification"""
+#
+#   def __init__(self):
+#     self.language = "zh"
+#
+#   def get_train_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "train.json")), "train")
+#     # dev_0827.tsv
+#
+#   def get_dev_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "dev.json")), "dev")
+#
+#   def get_test_examples(self, data_dir):
+#     """See base class."""
+#     return self._create_examples(
+#         self._read_json(os.path.join(data_dir, "test.json")), "test")
+#
+#   def get_labels(self):
+#     """See base class."""
+#     return ["0", "1"]
+#
+#   @classmethod
+#   def _create_examples_one(self, lines, set_type):
+#     examples = []
+#     for (i, line) in enumerate(lines):
+#       guid1 = "%s-%s" % (set_type, i)
+# #         try:
+#       if line['question'] == 'cause':
+#         text_a = convert_to_unicode(line['premise'] + '原因是什么呢？' + line['choice0'])
+#         text_b = convert_to_unicode(line['premise'] + '原因是什么呢？' + line['choice1'])
+#       else:
+#         text_a = convert_to_unicode(line['premise'] + '造成了什么影响呢？' + line['choice0'])
+#         text_b = convert_to_unicode(line['premise'] + '造成了什么影响呢？' + line['choice1'])
+#       label = convert_to_unicode(str(1 if line['label'] == 0 else 0)) if set_type != 'test' else '0'
+#       examples.append(
+#           InputExample(guid=guid1, text_a=text_a, text_b=text_b, label=label))
+# #         except Exception as e:
+# #             print('###error.i:',e, i, line)
+#     return examples
+#
+#   @classmethod
+#   def _create_examples(self, lines, set_type):
+#     examples = []
+#     for (i, line) in enumerate(lines):
+#       i = 2 * i
+#       guid1 = "%s-%s" % (set_type, i)
+#       guid2 = "%s-%s" % (set_type, i + 1)
+# #         try:
+#       premise = convert_to_unicode(line['premise'])
+#       choice0 = convert_to_unicode(line['choice0'])
+#       label = convert_to_unicode(str(1 if line['label'] == 0 else 0)) if set_type != 'test' else '0'
+#       #text_a2 = convert_to_unicode(line['premise'])
+#       choice1 = convert_to_unicode(line['choice1'])
+#       label2 = convert_to_unicode(
+#           str(0 if line['label'] == 0 else 1)) if set_type != 'test' else '0'
+#       if line['question'] == 'effect':
+#         text_a = premise
+#         text_b = choice0
+#         text_a2 = premise
+#         text_b2 = choice1
+#       elif line['question'] == 'cause':
+#         text_a = choice0
+#         text_b = premise
+#         text_a2 = choice1
+#         text_b2 = premise
+#       else:
+#         print('wrong format!!')
+#         return None
+#       examples.append(
+#           InputExample(guid=guid1, text_a=text_a, text_b=text_b, label=label))
+#       examples.append(
+#           InputExample(guid=guid2, text_a=text_a2, text_b=text_b2, label=label2))
+# #         except Exception as e:
+# #             print('###error.i:',e, i, line)
+#     return examples
