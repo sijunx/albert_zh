@@ -95,6 +95,8 @@ run_task() {
 #run_task afqmc 128 16 2e-5 3 300
 #run_task cmnli 128 64 3e-5 2 300
 #run_task csl 128 16 1e-5 5 100
-run_task iflytek 128 32 2e-5 3 300
+#run_task iflytek 128 32 2e-5 3 300
+#对于低质量样本3e-5的训练效果更好
+run_task iflytek 128 32 3e-5 3 300
 #run_task tnews 128 16 2e-5 3 300
 #run_task wsc 128 16 1e-5 10 10
