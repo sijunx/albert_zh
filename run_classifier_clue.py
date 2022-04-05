@@ -1069,7 +1069,7 @@ def main(_):
           writer_label.write("\n")
           num_written_lines += 1
     assert num_written_lines == num_actual_predict_examples
-    ## add by xusijun1
+    ## add by xusijun
     save_PBmodel(len(label_list))  # 生成单个pb模型。
 
 if __name__ == "__main__":
