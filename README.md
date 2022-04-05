@@ -1,3 +1,7 @@
+**我的alberTiny**
+在文件run_classifier_clue.sh中有：wget -c https://storage.googleapis.com/albert_zh/albert_tiny_489k.zip
+下载即是采用的albertTiny，里面含有vocab.txt文件
+
 # albert_zh
 
 An Implementation of <a href="https://arxiv.org/pdf/1909.11942.pdf">A Lite Bert For Self-Supervised Learning Language Representations</a> with TensorFlow
